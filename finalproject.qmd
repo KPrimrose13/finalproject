@@ -1,0 +1,191 @@
+---
+title: "Final Project"
+author: "Kelly Primrose and Diana Schoder"
+format: html
+editor: visual
+warning: false
+self-contained: true
+---
+
+```{r}
+#| echo: false
+library(tidyverse)
+library(lubridate)
+library(sf)
+library(ggplot2)
+library(tigris)
+library(tidycensus)
+library(tidymodels)
+library(tidyclust)
+library(factoextra)
+library(broom)
+library(plotly)
+```
+
+## Identifying Transit Typologies
+
+We use unsupervised machine learning to identify clusters of census tracts within DC based on their transit characteristics.
+
+```{r}
+transit <- read_csv("finalproject.csv")
+
+# Create recipe: PCA ----------------------------------------------------
+transit <- transit %>% 
+  select(-school_stop, -shelter, -st_abbrev) %>% 
+  mutate_all(~replace(., is.na(.), 0))
+
+transit_pca <- transit %>% 
+  select(-geometry, -geoid, -pm25) 
+
+# create a recipe with no outcome variable and all predictors
+# use num_comp to select a subset of principal component
+pca_rec <- recipe(~ ., data = transit_pca) %>%
+  # Omit NA
+  step_naomit(all_numeric()) %>% 
+    # center and scale (normalize) all predictors
+  step_normalize(all_numeric_predictors()) %>% 
+  # perform pca and use num_comp = 5 to only keep three components
+  step_pca(all_numeric(), num_comp = 5) %>% 
+  # run prep to prepare recipe
+  prep()
+  
+
+# obtain summary metrics 
+tidy(pca_rec, number = 3, type = "variance") %>%
+  filter(terms == "cumulative percent variance") %>%
+  slice_min(value, n = 4)
+
+# obtain loadings
+pca_pcs <- pca_rec %>%
+  bake(new_data = transit_pca)
+
+# view component values for each observation
+# notice how it only keeps three components
+pca_rec %>%
+  bake(new_data = NULL)
+
+# cluster analysis ----------------------------------------------------
+
+# set a seed because the clusters are not deterministic
+set.seed(202304281)
+
+# set up 5 fold cross-validation
+transit_cv <- vfold_cv(transit_pca, v = 5)
+
+# create a k-means clustering model spec with num_clusters = tune() for tuning
+kmeans_spec <- k_means(
+  num_clusters = tune()
+) %>%
+  set_engine(
+    "stats",
+    nstart = 100 
+  )
+
+
+# create a workflow with the pca_rec recipe and kmeans_spec specification
+kmeans_wflow <- workflow(
+  preprocessor = pca_rec,
+  spec = kmeans_spec
+)
+
+# create a tuning grid to consider 1 to 10 clusters
+clust_num_grid <- grid_regular(
+    num_clusters(),
+    levels = 10
+  )
+  
+  
+# tune the k-means clustering algorithm
+res <- tune_cluster(
+  object = kmeans_wflow,
+  resamples = transit_cv,
+  grid = clust_num_grid,
+  control = control_grid(save_pred = TRUE, extract = identity),
+  metrics = cluster_metric_set(sse_within_total)
+) 
+
+
+# collect metrics from tuning the number of clusters and create an elbow plot
+# 4 seems roughly the best here
+res %>%
+  collect_metrics() %>% 
+  filter(.metric == "sse_within_total") %>%
+  ggplot(aes(x = num_clusters, y = mean)) +
+  geom_point() + 
+  geom_line() + 
+  scale_x_continuous(breaks = 1:10) +
+  labs(
+    x = "Number of clusters",
+    y = "mean WSS over 5 folds"
+  ) +
+  theme_minimal() 
+
+
+
+# final cluster analysis --------------------------------------------------
+
+# we used 5-fold cross-validation to find the ideal number of clusters
+# now we need to fit one final model with 4 clusters
+
+# create a k-means specification with num_clusters = 4
+kmeans_spec_final <- k_means(
+  num_clusters = 4
+) %>%
+  set_engine(
+    "stats",
+    nstart = 100
+  )
+
+
+# create the final workflow
+kmeans_wflow_final <- workflow(
+  preprocessor = pca_rec,
+  spec = kmeans_spec_final
+)
+
+# fit the final model
+final_fit <- fit(
+  kmeans_wflow_final,
+  data = transit_pca
+)
+
+# examine the cluster means 
+tidy(final_fit)
+
+# visualization -------------------------------------------------------
+
+# create a dataframe that binds together the transit, PCA, and cluster data
+transit_clusters <- bind_cols(
+  transit,
+  final_fit %>%
+    extract_recipe() %>%
+    bake(transit_pca),
+  cluster = final_fit %>%
+    extract_cluster_assignment() %>%
+    pull(.cluster)
+)
+
+# create a plot of the clusters with PC1 and PC2 as the x and y axis
+ggplot() +
+  geom_point(
+    data = transit_clusters, 
+    mapping = aes(x = PC1, y = PC2, color = factor(cluster)),
+    alpha = 0.5
+  ) +
+  theme_minimal() 
+
+
+
+```
+
+## Analysis and Visualization
+
+```{r}
+
+```
+
+## Regression Analysis
+
+```{r}
+
+```
