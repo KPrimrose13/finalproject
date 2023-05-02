@@ -44,7 +44,7 @@ pca_rec <- recipe(~ ., data = transit_pca) %>%
   step_naomit(all_numeric()) %>% 
     # center and scale (normalize) all predictors
   step_normalize(all_numeric_predictors()) %>% 
-  # perform pca and use num_comp = 5 to only keep three components
+  # perform pca and use num_comp = 5 to only keep five components
   step_pca(all_numeric(), num_comp = 5) %>% 
   # run prep to prepare recipe
   prep()
