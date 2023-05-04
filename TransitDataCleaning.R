@@ -7,7 +7,8 @@ library(tigris)
 library(tidycensus)
 library(tidymodels)
 library(tidyclust)
-
+library(jsonlite)
+library(httr)
 
 # Read in all transportation-related datasets
 
@@ -23,11 +24,27 @@ truck_restrict <- geojsonsf::geojson_sf("data/Truck_Restriction.geojson")
 bikeshare <- st_read("data/Walkshed_Bikeshare/Walkshed_Bikeshare.shp") 
 
 # Read in air quality data
-air_monitors <- read_csv("data/Air_Quality_Realtime.csv") 
-trees <- read_csv("data/Urban_Tree_Canopy_by_Census_Block_in_2020.csv")
+air_monitors <- read_csv("Air_Quality_Realtime.csv") 
+trees <- read_csv("Urban_Tree_Canopy_by_Census_Block_in_2020.csv")
 aq <- read_csv("data/ejscreen.csv")
 
 # Demographic data (API)
+
+#Building url and assigning to object
+#KELLY NOTE: The url is built & working, but I need to input the right variables cuz at present it's only calling total pop for dc
+#and DC is numbered 11, weirdly
+url <- 	"https://api.census.gov/data/2017/acs/acs5/subject?get=NAME,S0101_C01_001E&for=state:11&key=b89a4920b06155446b2127cebe34a3122d308ccd"
+acs_dc <- GET(url = url)
+
+#checking for server error
+http_status(acs_dc)
+
+#converting into usable format
+acs_dc <- content(acs_dc, as = "text")
+acs_matrix <- fromJSON(acs_dc)
+acs_data <- as_tibble(acs_matrix[2:nrow(acs_matrix),],
+                      .name_repair = "minimal")
+names(acs_data) <- acs_matrix[1, ]
 
 #################################################################
 
@@ -118,9 +135,17 @@ truck_restrict <- truck_restrict %>%
 
 # Clean bikeshare
 
-# Clean DC monitor air quality data
+# Clean DC monitor air quality- create a POSIXct time variable, then create year, month, date, and time variables from it. 
+# After that, remove unnecessary variables and the non-POSIXct date variable
 air_monitors <- air_monitors %>% 
-  clean_names()
+  janitor::clean_names() %>%
+  mutate(datetime_clean = ymd_hms(datetime_local))%>%
+  mutate(year = year(datetime_clean))%>%
+  mutate(day = wday(datetime_clean, label = FALSE))%>%
+  mutate(month = month(datetime_clean, label = FALSE))%>%
+  mutate(time = hour(datetime_clean))%>%
+  select(-datasource, -objectid, -aqsid, -datetime_local)%>%
+  drop_na()
 
 
 # Clean EJ Screen data on air quality
