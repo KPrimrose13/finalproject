@@ -178,6 +178,86 @@ ggplot() +
 
 ```
 
+
+```{r}
+#These are all things from my stretch exercise, we can choose what to keep
+airqual_split <- initial_split(data = air_monitors)
+
+airqual_train <- training(x = air_monitors)
+airqual_test <- testing(x = air_monitors)
+
+
+#visualization 1 
+airqual_train %>%
+  group_by(parametername)%>%
+  ggplot() +
+  geom_bar(mapping = aes(x = parametername))+
+  labs(title = "Types of Air Pollution in DC", 
+       caption = "Data source: Open Data DC",
+       )+
+  xlab("Type of pollutant")+
+  ylab("Frequency of pollutant detection")
+
+#mean values for each type of pollution
+
+airqual_train %>%
+ group_by(parametername)%>%
+  summarize(average_value = mean(value))
+
+
+#Through running this code on Ozone, I found out that it isn't measured at all stations.  I decided to leave this in, because it's a good example of how EDA can help us discover quirks in the data. 
+
+#airqual_train %>%
+# group_by(sitename)%>%
+#  filter(parametername == "OZONE")%>%
+#  summarise(Ozonepersite = sum(OZONE))
+
+#After looking at the data directly, I selected NO2 since it's measured at all sites.
+airqual_train %>%
+ filter(parametername == "NO2")%>%
+  group_by(sitename)%>%
+  count()
+
+#Visualization 2
+airqual_train %>%
+  filter(parametername == "NO2")%>%
+  group_by(sitename)%>%
+  ggplot()+
+  geom_bar(mapping= aes(x = sitename))+
+  labs(title = "Nitrogen Oxide levels by Measuring Station",
+       x = "Measuring Station", 
+       y = "Amount of NO2 in PPB",
+       caption = "Source: Open Data DC")+
+  theme_bw()
+
+#Visualization 3
+airqual_train %>%
+  filter(parametername == "OZONE", year == c("2021", "2022", "2023"))%>%
+  ggplot()+
+  geom_bar(mapping = aes(x = month))+
+  labs(title = "Ozone levels by Month, 2021-2023 Aggregate",
+       x = "Month", 
+       y = "Amount of Ozone in PPB",
+       caption = "Source: Open Data DC")+
+  theme_bw()
+
+#Visualization 4
+airqual_train %>%
+  filter(parametername == "PM2.5", year == c("2021", "2022", "2023"))%>%
+  ggplot()+
+  geom_bar(mapping = aes(x = month))+
+  labs(title = "PM2.5 levels by Month, 2021-2023 Aggregate",
+       x = "Month", 
+       y = "Amount of PM2.5 in UG/M3",
+       caption = "Source: Open Data DC / PM2.5 = Fine Particulate Matter")+
+  theme_bw()
+
+```
+
+
+
+
+
 ## Analysis and Visualization
 
 ```{r}
