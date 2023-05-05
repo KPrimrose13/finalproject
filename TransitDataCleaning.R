@@ -15,7 +15,7 @@ library(httr)
 traffic <- geojsonsf::geojson_sf("data/2017_Traffic_Volume.geojson")  #2017 
 commute <- read_csv("data/ACS_Economic_Characteristics_DC_Census_Tract.csv")
 bike_lanes <- geojsonsf::geojson_sf("data/Bicycle_Lanes.geojson") 
-bus_stops <- read_csv("data/Metro_Bus_Stops.csv") #2017
+bus_stops <- read_csv("Metro_Bus_Stops.csv") #2017
 metro <- read_csv("data/Metro_Lines_in_DC.csv") 
 ped_friendly <- geojsonsf::geojson_sf("data/Pedestrian_Friendliness_Index_Census_Blocks.geojson") 
 shared_mobility <- geojsonsf::geojson_sf("data/Shared_Mobility_Preferred_Parking_Zones.geojson") 
@@ -32,8 +32,10 @@ aq <- read_csv("data/ejscreen.csv")
 
 #Building url and assigning to object
 #KELLY NOTE: The url is built & working, but I need to input the right variables cuz at present it's only calling total pop for dc
-#and DC is numbered 11, weirdly
-url <- 	"https://api.census.gov/data/2017/acs/acs5/subject?get=NAME,S0101_C01_001E&for=state:11&key=b89a4920b06155446b2127cebe34a3122d308ccd"
+#and DC is numbered 11
+
+url <- 	"https://api.census.gov/data/2017/acs/acs1?get=NAME,group(B01001)&for=state:11&key=b89a4920b06155446b2127cebe34a3122d308ccd"
+
 acs_dc <- GET(url = url)
 
 #checking for server error
@@ -44,7 +46,7 @@ acs_dc <- content(acs_dc, as = "text")
 acs_matrix <- fromJSON(acs_dc)
 acs_data <- as_tibble(acs_matrix[2:nrow(acs_matrix),],
                       .name_repair = "minimal")
-names(acs_data) <- acs_matrix[1, ]
+names(acs_data) <- acs_matrix[]
 
 #################################################################
 
@@ -83,10 +85,14 @@ bus_stops <- bus_stops %>%
   clean_names %>% 
   st_as_sf(coords = c("bstp_lon", "bstp_lat"), crs = st_crs(4326)) %>% 
   mutate(bstp_has_bkrs = if_else(bstp_has_bkrs == "N", 0, 1)) %>% 
-  mutate(shelter = if_else(bstp_bnh_cnt == "INS", 1, 0)) %>% 
+  #changing bstp_bnh_cnt to bstp_bst_tcd because INS doesn't exist in the former variable
+  mutate(shelter = if_else(bstp_bst_tcd == "INS", 1, 0)) %>% 
   mutate(bstp_bnh_cnt = if_else(bstp_bnh_cnt < 0, 0, 1)) %>% 
-  mutate(school_stop = if_else(bstp_tcd == "SCH", 1, 0)) %>% 
-  select("bstp_has_bkrs","shelter", "bstp_bnh_cnt", "school_stop")
+  mutate(school_stop = if_else(bstp_bst_tcd == "SCH", 1, 0)) %>% 
+  mutate(clean_eff_date = ymd_hms(bstp_eff_date))%>%
+  mutate(year = year(clean_eff_date))%>%
+  select("bstp_has_bkrs","shelter", "bstp_bnh_cnt", "school_stop", "year")
+ 
 
 # SCH = school stop
 # BSTP_BNH_CNT = bench count
@@ -135,6 +141,13 @@ truck_restrict <- truck_restrict %>%
 
 # Clean bikeshare
 
+#visualize existing bikeshare walksheds
+bikeshare%>%
+  ggplot()+
+  geom_sf()+
+  labs(title = "test")+
+  theme_void()
+
 # Clean DC monitor air quality- create a POSIXct time variable, then create year, month, date, and time variables from it. 
 # After that, remove unnecessary variables and the non-POSIXct date variable
 air_monitors <- air_monitors %>% 
@@ -156,8 +169,11 @@ aq <- aq %>%
   rename("geoid" = "id")
 
 
-# Clean urban tree canopy
-
+# Clean urban tree canopy. I left statefp20 in since it might be useful for joining to other datasets
+# I removed all possible planting areas since increasing the tree canopy isn't our primary focus
+trees <- trees%>%
+  select(-OBJECTID, -COUNTYFP20, -NAME20, -MTFCC20, -FUNCSTAT20, -PPA_V_AC, -PPA_V_PCT, -TO_PPA_AC,
+         -TO_PPA_PCT, -PPA_IA_AC, -PPA_IA_PCT, -UN_V_AC, -UN_V_PCT, -TO_UN_AC, -TO_UN_PCT, -UN_IA_AC, -UN_IA_PCT)
 
 # Clean demographic data
 
