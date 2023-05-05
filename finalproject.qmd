@@ -250,7 +250,7 @@ airqual_train %>%
        x = "Month", 
        y = "Amount of PM2.5 in UG/M3",
        caption = "Source: Open Data DC / PM2.5 = Fine Particulate Matter")+
-  theme_bw()
+  theme_bw()git 
 
 ```
 
