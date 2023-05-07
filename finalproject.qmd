@@ -179,8 +179,9 @@ ggplot() +
 ```
 
 
+
 ```{r}
-#These are all things from my stretch exercise, we can choose what to keep
+#These are all things from my stretch exercise, we can choose what to keep - Kelly
 airqual_split <- initial_split(data = air_monitors)
 
 airqual_train <- training(x = air_monitors)
@@ -254,13 +255,58 @@ airqual_train %>%
 
 ```
 
-
-
-
-
 ## Analysis and Visualization
 
 ```{r}
+#This is the decision tree model from my stretch exercise, we can feel free to use or cut as needed - Kelly
+
+
+#Creating a new chunk to make models easier to find
+
+############################# Decision Tree Model - Model 3
+
+airqual_tree1 <- air_monitors%>%
+  filter(parametername == "NO2")%>%
+  select(-parametername, -reportingunits)
+
+airqual_tree <- airqual_tree1 
+
+set.seed(123)
+
+tree_split <- initial_split(airqual_tree1)
+
+tree_training <- training(x = tree_split)
+tree_testing <- testing(x = tree_split)
+
+
+airqual_trec <- recipe(value ~ ., data = tree_training) %>%
+  step_dummy(sitename)%>%
+  step_normalize(all_numeric_predictors())%>%
+  prep()
+
+#regression
+airqual_treemod <- decision_tree()%>%
+  set_engine(engine = "rpart")%>%
+  set_mode(mode = "regression")
+
+airqual_twf <- workflow()%>%
+  add_recipe(airqual_trec)%>%
+  add_model(airqual_treemod)
+
+airqual_fit <- airqual_twf%>%
+  fit(data = tree_training)
+
+rpart.plot::rpart.plot(x = airqual_fit$fit$fit$fit)
+
+airqual_trpredict <- bind_cols(
+  tree_testing,
+  predict(object = airqual_fit, new_data = tree_testing)
+)
+
+airqual_trpredict%>%
+  rmse(value, .pred)%>%
+  print()
+
 
 ```
 
