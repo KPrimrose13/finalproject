@@ -29,15 +29,20 @@ trees <- read_csv("Urban_Tree_Canopy_by_Census_Block_in_2020.csv")
 aq <- read_csv("data/ejscreen.csv")
 
 # Demographic data (API)
-
-#Building url and assigning to object
-#KELLY NOTE: The url is built & working, but I need to input the right variables cuz at present it's only calling total pop for dc
-#and DC is numbered 11
-
 census_api_key("b89a4920b06155446b2127cebe34a3122d308ccd")
 
-acs_dc <- get_acs(variables = "DP02_0001E", state = "DC", geography = "county", 
-                  output = "wide", year = 2017, survey = "acs5")
+acs_dc <- get_acs(variables = c("DP02_0001", "DP02_0112", "DP02_0095E", "DP02_0011",
+                                "DP03_0001E", "DP03_0019E", "DP03_0020E", "DP03_0021E", "DP03_0022E",
+                                "DP03_0025E", "DP03_0119E", "DP03_0108E", "DP03_0113E"), 
+                  state = "DC", geography = "tract", 
+                  output = "wide", year = 2017)%>%
+  rename("total_households_est" = "DP02_0001E", "home_lang_est" = "DP02_0112E",
+         "foreignborn_popest" = "DP02_0095E", "singlemom_est" = "DP02_0011E", "empstat_est" = "DP03_0001E",
+  #variables below describe how people get to work
+         "drovealone_est" = "DP03_0019E", "drovecarpool_est" = "DP03_0020E", "pubtrans_est" = "DP03_0021E",
+        "walked_est" = "DP03_0022E", "avgcommutetime_est" = "DP03_0025E", "poverty_est" = "DP03_0119E",
+  "emp_nohealth_est" = "DP03_0108E", "unemp_nohealth_est" = "DP03_0113E"
+         )
 
 
 #################################################################
