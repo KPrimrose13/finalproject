@@ -34,19 +34,11 @@ aq <- read_csv("data/ejscreen.csv")
 #KELLY NOTE: The url is built & working, but I need to input the right variables cuz at present it's only calling total pop for dc
 #and DC is numbered 11
 
-url <- 	"https://api.census.gov/data/2017/acs/acs1?get=NAME,group(B01001)&for=state:11&key=b89a4920b06155446b2127cebe34a3122d308ccd"
+census_api_key("b89a4920b06155446b2127cebe34a3122d308ccd")
 
-acs_dc <- GET(url = url)
+acs_dc <- get_acs(variables = "DP02_0001E", state = "DC", geography = "county", 
+                  output = "wide", year = 2017, survey = "acs5")
 
-#checking for server error
-http_status(acs_dc)
-
-#converting into usable format
-acs_dc <- content(acs_dc, as = "text")
-acs_matrix <- fromJSON(acs_dc)
-acs_data <- as_tibble(acs_matrix[2:nrow(acs_matrix),],
-                      .name_repair = "minimal")
-names(acs_data) <- acs_matrix[]
 
 #################################################################
 
@@ -157,7 +149,7 @@ air_monitors <- air_monitors %>%
   mutate(day = wday(datetime_clean, label = FALSE))%>%
   mutate(month = month(datetime_clean, label = FALSE))%>%
   mutate(time = hour(datetime_clean))%>%
-  select(-datasource, -objectid, -aqsid, -datetime_local)%>%
+  select(-datasource, -objectid, -aqsid, -datetime_local, -datetime_clean)%>%
   drop_na()
 
 
