@@ -36,13 +36,15 @@ acs_dc <- get_acs(variables = c("DP02_0001", "DP02_0112", "DP02_0095E", "DP02_00
                                 "DP03_0025E", "DP03_0119E", "DP03_0108E", "DP03_0113E"), 
                   state = "DC", geography = "tract", 
                   output = "wide", year = 2017)%>%
-  rename("total_households_est" = "DP02_0001E", "home_lang_est" = "DP02_0112E",
-         "foreignborn_popest" = "DP02_0095E", "singlemom_est" = "DP02_0011E", "empstat_est" = "DP03_0001E",
+  rename("total_households_est" = "DP02_0001E", "homelang_est" = "DP02_0112E",
+         "foreignbornpop_est" = "DP02_0095E", "singlemom_est" = "DP02_0011E", "employed_est" = "DP03_0001E",
   #variables below describe how people get to work
          "drovealone_est" = "DP03_0019E", "drovecarpool_est" = "DP03_0020E", "pubtrans_est" = "DP03_0021E",
         "walked_est" = "DP03_0022E", "avgcommutetime_est" = "DP03_0025E", "poverty_est" = "DP03_0119E",
+  #These variables describe estimate of labor force that is without health insurance 
   "emp_nohealth_est" = "DP03_0108E", "unemp_nohealth_est" = "DP03_0113E"
-         )
+         )%>%
+  janitor::clean_names()
 
 
 #################################################################
