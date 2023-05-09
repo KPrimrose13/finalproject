@@ -33,7 +33,8 @@ census_api_key("b89a4920b06155446b2127cebe34a3122d308ccd")
 
 acs_dc <- get_acs(variables = c("DP02_0001", "DP02_0112", "DP02_0095E", "DP02_0011",
                                 "DP03_0001E", "DP03_0019E", "DP03_0020E", "DP03_0021E", "DP03_0022E",
-                                "DP03_0025E", "DP03_0119E", "DP03_0108E", "DP03_0113E"), 
+                                "DP03_0025E", "DP03_0119E", "DP03_0108E", "DP03_0113E", "DP05_0037E",
+                                "DP05_0038E", "DP05_0044E", "DP05_0071PE"), 
                   state = "DC", geography = "tract", 
                   output = "wide", year = 2017)%>%
   rename("total_households_est" = "DP02_0001E", "homelang_est" = "DP02_0112E",
@@ -42,9 +43,12 @@ acs_dc <- get_acs(variables = c("DP02_0001", "DP02_0112", "DP02_0095E", "DP02_00
          "drovealone_est" = "DP03_0019E", "drovecarpool_est" = "DP03_0020E", "pubtrans_est" = "DP03_0021E",
         "walked_est" = "DP03_0022E", "avgcommutetime_est" = "DP03_0025E", "poverty_est" = "DP03_0119E",
   #These variables describe estimate of labor force that is without health insurance 
-  "emp_nohealth_est" = "DP03_0108E", "unemp_nohealth_est" = "DP03_0113E"
+  "emp_nohealth_est" = "DP03_0108E", "unemp_nohealth_est" = "DP03_0113E", "race_white" = "DP05_0037E",
+  "race_blackAA" = "DP05_0038E", "race_asian" = "DP05_0044E", "race_hispanic" = "DP05_0071PE"
          )%>%
-  janitor::clean_names()
+  janitor::clean_names()%>%
+  #removing the margin of error variables since we won't be using them
+  select(-starts_with("dp"))
 
 
 #################################################################
