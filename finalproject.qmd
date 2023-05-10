@@ -1,7 +1,11 @@
 ---
-title: "Final Project"
+title: "Exploring Transportation and Air Quality in Washington, DC"
+subtitle: "Intro to Data Science Final Project"
 author: "Kelly Primrose and Diana Schoder"
-format: html
+format: 
+  html:
+    code-fold: true
+    code-summary: "Show the code"
 editor: visual
 warning: false
 self-contained: true
@@ -20,22 +24,37 @@ library(tidyclust)
 library(factoextra)
 library(broom)
 library(plotly)
+library(purrr)
+library(patchwork)
+library(janitor)
 ```
 
-## Identifying Transit Typologies
+## Background
 
-We use unsupervised machine learning to identify clusters of census tracts within DC based on their transit characteristics.
+Transportation can be a [source](https://storymaps.arcgis.com/stories/79a80bb4a7074b6989f94a4a5b154675) of air pollution, but it can also be a solution to poor air quality. For example, shifting people from car usage to walking and public transit has the potential to reduce carbon emissions, mitigate pollution-induced respiratory illness, and more. To target policy interventions in DC, it is important to know exactly what types of transportation patterns are contributing most to air pollution.
+
+Our analysis uses unsupervised machine learning to create clusters of DC census tracts based on their transportation patterns. We use geospatial analysis to explore what is driving these clusters, which informs our "transportation typologies." We then run three regressions to better understand the associations between these typologies and particulate matter (PM 2.5).
+
+We then do a deeper dive into air quality in DC, using data from five air monitors. Although we only have tract-level data for PM 2.5--which makes it our primary variable of interest when examining transportation throughout the district--our exploration of the air monitors indicates that future analyses would benefit from data on other pollutants at the tract level. This portion of the analysis demonstrates that the variation in air quality is not only spatial (across tracts) but also temporal, varying with days of the week and months. We end with a decision tree that categorizes observations from the air monitors and provide recommendations on how to make this tool even more useful given everything we have discovered in our analysis.
+
+For more info on the data (including APIs), data cleaning, and merging that created the data set used below, see the README in [our GitHub page](https://github.com/KPrimrose13/finalproject.git).
+
+## Identifying Transportation Typologies
+
+We first use principal components analysis (PCA) and identify clusters of census tracts within DC based on their transportation characteristics.
+
+### PCA
+
+After the first ten components, the cumulative percent variance does not increase by as much with each additional component. It takes fifteen components to reach 90 percent cumulative variance. Although the first two components explain more on their own than any others, they together explain only a third of the variation.
 
 ```{r}
-transit <- read_csv("finalproject.csv")
+transit_original <- read_csv("finalproject.csv")
+
 
 # Create recipe: PCA ----------------------------------------------------
-transit <- transit %>% 
-  select(-school_stop, -shelter, -st_abbrev) %>% 
-  mutate_all(~replace(., is.na(.), 0))
-
-transit_pca <- transit %>% 
-  select(-geometry, -geoid, -pm25) 
+transit_pca <- transit_original %>% 
+  select(-school_stop, -shelter, -st_abbrev, -utc_pct, -race_white, -race_black_aa, -race_asian, -race_hispanic, -geoid, -name, -pm25)  
+  
 
 # create a recipe with no outcome variable and all predictors
 # use num_comp to select a subset of principal component
@@ -51,19 +70,32 @@ pca_rec <- recipe(~ ., data = transit_pca) %>%
   
 
 # obtain summary metrics 
-tidy(pca_rec, number = 3, type = "variance") %>%
+sum_metrics <- tidy(pca_rec, number = 3, type = "variance") %>%
   filter(terms == "cumulative percent variance") %>%
-  slice_min(value, n = 4)
+  slice_min(value, n = 20)
 
+print(sum_metrics)
+
+
+```
+
+The following code obtains loadings and displays the component values for each observation of the first five components.
+
+```{r}
 # obtain loadings
 pca_pcs <- pca_rec %>%
   bake(new_data = transit_pca)
 
 # view component values for each observation
-# notice how it only keeps three components
 pca_rec %>%
   bake(new_data = NULL)
+```
 
+### Cluster Analysis
+
+Having created an elbow plot, we choose to use four clusters--roughly where the "elbow" appears to be.
+
+```{r}
 # cluster analysis ----------------------------------------------------
 
 # set a seed because the clusters are not deterministic
@@ -120,9 +152,13 @@ res %>%
   ) +
   theme_minimal() 
 
+```
 
+The final cluster means for each component are below. When comparing PC1 and PC2, the largest difference in means is in cluster three, which has the smallest size. Cluster one has the greatest size, and the means for cluster four are nearly identical.
 
+```{r}
 # final cluster analysis --------------------------------------------------
+
 
 # we used 5-fold cross-validation to find the ideal number of clusters
 # now we need to fit one final model with 4 clusters
@@ -152,11 +188,18 @@ final_fit <- fit(
 # examine the cluster means 
 tidy(final_fit)
 
-# visualization -------------------------------------------------------
 
+
+```
+
+### Cluster Visualization
+
+Clusters one and two appear to have the most overlap. Cluster four is the most dispersed, containing everything with PC1 \> 5. Cluster four is delineated from clusters one and two around PC2 = -2. However, because the components are relatively opaque, this information is difficult to interpret in terms of what the clusters reflect.
+
+```{r}
 # create a dataframe that binds together the transit, PCA, and cluster data
 transit_clusters <- bind_cols(
-  transit,
+  transit_original,
   final_fit %>%
     extract_recipe() %>%
     bake(transit_pca),
@@ -174,18 +217,281 @@ ggplot() +
   ) +
   theme_minimal() 
 
+```
+
+To better understand these clusters, we map them, finding that:
+
+\\01. Cluster one covers downtown, Capitol Hill, and Georgetown.
+
+\\02.Cluster two is the most geographically dispersed, and it captures all of Wards 7 and 8.
+
+\\03.Cluster three is intermingled with much of cluster two, but covers more of the northern areas of DC.
+
+\\04.Cluster four largely represents Haines Point and the National Mall.
+
+```{r}
+
+# Plot clusters by geography
+dc_tracts <- tracts(state = 11) %>% 
+  st_transform(crs = 4326) %>% 
+  clean_names() %>% 
+  select(geoid)
+
+clusters_merge <- merge(transit_clusters, dc_tracts, by = "geoid") 
+
+clusters_merge <- clusters_merge %>% 
+  st_as_sf()
+
+ggplot() +
+  geom_sf(data = dc_tracts) +
+  geom_sf(data = clusters_merge, aes(fill = cluster)) +
+  labs(title = "Transit Clusters in DC") +
+  theme_void()
+```
+
+We then create a correlation matrix and identify the five most correlated factors with the first and second components. For the first, this includes walking commutes, the number of metro lines, total bike lanes, taxi capacity, and time commuting.
+
+Clusters one and four have more walking, metro, bike lanes, and taxis. Clusters two and three have fewer options and longer commute times.
+
+```{r}
+# Maps for the 5 most correlated factors with PC1 
+
+cor_matrix <- cor(transit_clusters[sapply(transit_clusters,is.numeric)]) 
+
+
+p1 <- ggplot() +
+  geom_sf(data = dc_tracts) +
+  geom_sf(data = clusters_merge, aes(fill = cluster)) +
+  labs(title = "Transit Clusters in DC") +
+  theme_void()
+
+p2 <- ggplot() +
+  geom_sf(data = dc_tracts) +
+  geom_sf(data = clusters_merge, aes(fill = walk_comm)) +
+  labs(title = "Commutes by Walk") +
+  theme_void()
+
+p3 <- ggplot() +
+  geom_sf(data = dc_tracts) +
+  geom_sf(data = clusters_merge, aes(fill = num_lines)) +
+  labs(title = "Number of Metro Lines") +
+  theme_void()
+
+p4 <- ggplot() +
+  geom_sf(data = dc_tracts) +
+  geom_sf(data = clusters_merge, aes(fill = total_bike_lanes)) +
+  labs(title = "Total Bike Lanes") +
+  theme_void()
+
+p5 <- ggplot() +
+  geom_sf(data = dc_tracts) +
+  geom_sf(data = clusters_merge, aes(fill = taxi_capacity)) +
+  labs(title = "Taxi Capacity") +
+  theme_void()
+
+p6 <- ggplot() +
+  geom_sf(data = dc_tracts) +
+  geom_sf(data = clusters_merge, aes(fill = time_comm)) +
+  labs(title = "Time Commuting") +
+  theme_void()
+
+
+p1 + p2 + p3 + p4 + p5 + p6 
+```
+
+Now, looking at the second component, there are clearer distinctions between clusters two and three. Relative to cluster three, cluster two has more traffic restrictions and bus stops. Cluster four has a high number of traffic restrictions as well, which makes sense; it is mostly green areas.
+
+```{r}
+
+# Maps for the top five most correlated factors with PC2
+p1 <- ggplot() +
+  geom_sf(data = dc_tracts) +
+  geom_sf(data = clusters_merge, aes(fill = cluster)) +
+  labs(title = "Transit Clusters in DC") +
+  theme_void()
+
+p2 <- ggplot() +
+  geom_sf(data = dc_tracts) +
+  geom_sf(data = clusters_merge, aes(fill = restrict1 )) +
+  labs(title = "Traffic Restriction 1") +
+  theme_void()
+
+p3 <- ggplot() +
+  geom_sf(data = dc_tracts) +
+  geom_sf(data = clusters_merge, aes(fill = restrict2 )) +
+  labs(title = "Traffic Restriction 2") +
+  theme_void()
+
+p4 <- ggplot() +
+  geom_sf(data = dc_tracts) +
+  geom_sf(data = clusters_merge, aes(fill = local_deliv)) +
+  labs(title = "Local Deliveries Allowed") +
+  theme_void()
+
+p5 <- ggplot() +
+  geom_sf(data = dc_tracts) +
+  geom_sf(data = clusters_merge, aes(fill = bstp_geo_id)) +
+  labs(title = "Bus Stops") +
+  theme_void()
+
+p6 <- ggplot() +
+  geom_sf(data = dc_tracts) +
+  geom_sf(data = clusters_merge, aes(fill = car_alone_comm)) +
+  labs(title = "Commuting by Car") +
+  theme_void()
+
+p1 + p2 + p3 + p4 + p5 + p6
+```
+
+Based on these maps, we propose four "transportation typologies":
+
+**Cluster one is "More options."** This cluster may represent census tracts with a uniquely high variety of transportation modes.
+
+**Cluster two is "Fewer options, restricted traffic."** This cluster may represent census tracts that have fewer transportation modes but restrictions on truck traffic, such as low-transit residential areas.
+
+**Cluster three is "Fewer options, unrestricted traffic."** This cluster may represent census tracts that also have fewer transportation modes but without these protections around truck traffic. Notably, many of these tracts are in Wards seven and eight.
+
+**Cluster four is "Intermediate options, unrestricted traffic."** This cluster may represent census tracts with some variety of transportation modes--between the first and second/third clusters--but with fewer restrictions on truck traffic as the areas surrounding downtown.
+
+### Data Visualization
+
+To further test these interpretations, we use data visualization.
+
+```{r}
+#Bar charts/means
+
+
 
 
 ```
 
-
+Traffic volume - moved here from the data cleaning file - don't have to keep!
 
 ```{r}
-#These are all things from my stretch exercise, we can choose what to keep - Kelly
+
+# Overview Graph: Traffic volume
+dc <- states(progress_bar = FALSE) %>%
+  filter(STUSPS == "DC")
+
+ggplot() +
+  geom_sf(data = dc) +
+  geom_sf(data = clusters_merge, aes(fill = aadt)) +
+  labs(title = "Annual Average Daily Traffic") +
+  theme_void()
+
+```
+
+Public Transit - moved here from the data cleaning file - don't have to keep!
+
+```{r}
+# Summary: Public transit
+p1 <- ggplot() +
+  geom_sf(data = dc) +
+  geom_sf(data = clusters_merge, aes(fill = bstp_geo_id)) +
+  labs(title = "Bus Stops") +
+  theme_void()
+
+p2 <- ggplot() +
+  geom_sf(data = dc) +
+  geom_sf(data = clusters_merge, aes(fill = num_lines)) +
+  labs(title = "Metro Lines") +
+  theme_void()
+
+p1 + p2
+
+
+
+```
+
+## Regression Analysis
+
+Our first model regresses PM 2.5 levels on each "transportation typology." Cluster one is the reference category, represented by the intercept, and is significant at the one percent level. Cluster two is also significant at the one percent level. Because of the overlaps between clusters one and four, and the overlaps between clusters two and three, it makes sense that only one cluster from each pair is significant.
+
+Cluster three ("Fewer options, unrestricted traffic") has the highest air pollution on average, and cluster two ("Fewer options, restricted traffic") has the lowest.
+
+```{r}
+# Regression One
+model <- lm(pm25 ~ cluster, data=transit_clusters)
+summary(model)
+
+```
+
+One explanation of the first model's findings is that the clusters reflect both transit options and different levels of air pollution because of a third variable that is driving these results. In the second model, we introduce variables on race, income, and tree coverage to reduce some of this possible endogeneity. Race and income should somewhat capture the differences in land use, industry, and other factors that are the products of historical, racist policy and planning decisions; these continue to affect transportation equity issues and air quality today. Tree coverage is related, and it may mitigate air pollution even in high-driving areas.
+
+```{r}
+# Regression Two: Control Variables
+model <- lm(pm25 ~ cluster + race_black_aa + race_white + race_asian + race_hispanic + poverty_est + utc_pct, data=transit_clusters)
+summary(model)
+
+```
+
+Cluster three ("Fewer options, unrestricted traffic") still has the highest air pollution on average, and cluster two ("Fewer options, restricted traffic") still has the lowest. However, cluster two is no longer significant. All of the race variables except for "race_white" are significant, as is the poverty estimate. All of these effects are very small, and so they are not substantively significant.
+
+```{r}
+# Visualization
+p1 <- ggplot() +
+  geom_sf(data = dc_tracts) +
+  geom_sf(data = clusters_merge, aes(fill = pm25 )) +
+  labs(title = "Air Quality by DC Census Tract") +
+  theme_void()
+
+p2 <- ggplot() +
+  geom_sf(data = dc_tracts) +
+  geom_sf(data = clusters_merge, aes(fill = cluster)) +
+  labs(title = "Transit Clusters in DC") +
+  theme_void()
+
+p3 <- ggplot() +
+  geom_sf(data = dc_tracts) +
+  geom_sf(data = clusters_merge, aes(fill = race_hispanic)) +
+  labs(title = "Race in DC: Hispanic") +
+  theme_void()
+
+p4 <- ggplot() +
+  geom_sf(data = dc_tracts) +
+  geom_sf(data = clusters_merge, aes(fill = poverty_est)) +
+  labs(title = "Poverty in DC") +
+  theme_void()
+
+p1 + p2 + p3 + p4
+
+
+
+```
+
+In the third regression, we use all of the numeric variables we have as covariates, aiming to identify some of the specific tranportation characteristics that may be making the first cluster significant. The factors that are most significantly associated with reductions in PM 2.5 are bus stops with bike racks, commuting by walking, and lower traffic volume.
+
+```{r}
+# Regression Three: All numeric variables
+transit_numeric <- select_if(transit_clusters, is.numeric) 
+
+model <- lm(pm25 ~ ., data = transit_numeric)
+summary(model)
+
+
+```
+
+## Exploring Air Quality in DC
+
+Transportation is not the only determinant of air quality in the District, and PM 2.5 is not the only pollutant. DC has air quality monitors that track more data, including over time, than the EJ Screen data. Although we could not use this in the cluster analysis because the monitors are only in five census tracts, the data are nevertheless useful for providing important context for our results.
+
+```{r}
+air_monitors <- read_csv("data/Air_Quality_Realtime.csv") 
+
+air_monitors <- air_monitors %>% 
+  janitor::clean_names() %>%
+  mutate(datetime_clean = ymd_hms(datetime_local))%>%
+  mutate(year = year(datetime_clean))%>%
+  mutate(day = wday(datetime_clean, label = FALSE))%>%
+  mutate(month = month(datetime_clean, label = FALSE))%>%
+  mutate(time = hour(datetime_clean))%>%
+  select(-datasource, -objectid, -aqsid, -datetime_local, -datetime_clean)%>%
+  drop_na()
+
 airqual_split <- initial_split(data = air_monitors)
 
-airqual_train <- training(x = air_monitors)
-airqual_test <- testing(x = air_monitors)
+airqual_train <- training(x = airqual_split)
+airqual_test <- testing(x = airqual_split)
 
 
 #visualization 1 
@@ -199,21 +505,23 @@ airqual_train %>%
   xlab("Type of pollutant")+
   ylab("Frequency of pollutant detection")
 
+```
+
+See below for the mean values of each type of pollution shown in the overview chart.
+
+```{r}
 #mean values for each type of pollution
 
 airqual_train %>%
  group_by(parametername)%>%
   summarize(average_value = mean(value))
 
+```
 
-#Through running this code on Ozone, I found out that it isn't measured at all stations.  I decided to leave this in, because it's a good example of how EDA can help us discover quirks in the data. 
+As expected from our regression analysis, air pollution does vary spatially. Each of the air monitors detects different levels of each pollutant--not just PM 2.5. And example of variation in NO2 pollution across the air monitors is below.
 
-#airqual_train %>%
-# group_by(sitename)%>%
-#  filter(parametername == "OZONE")%>%
-#  summarise(Ozonepersite = sum(OZONE))
-
-#After looking at the data directly, I selected NO2 since it's measured at all sites.
+```{r}
+#NO2
 airqual_train %>%
  filter(parametername == "NO2")%>%
   group_by(sitename)%>%
@@ -231,6 +539,11 @@ airqual_train %>%
        caption = "Source: Open Data DC")+
   theme_bw()
 
+```
+
+Moreover, air pollution varies over time--something we were not able to test with the 2017 data. For example, ozone levels drop throuhgout the first third of the year before increasing again, and are typically highest in December.
+
+```{r}
 #Visualization 3
 airqual_train %>%
   filter(parametername == "OZONE", year == c("2021", "2022", "2023"))%>%
@@ -242,6 +555,12 @@ airqual_train %>%
        caption = "Source: Open Data DC")+
   theme_bw()
 
+```
+
+PM 2.5 levels also vary by month and are lowest in January and February. If this data is tracked in each census tract in the future, it would be interesting to know whether these time trends are the same across each "transit typology."
+
+```{r}
+
 #Visualization 4
 airqual_train %>%
   filter(parametername == "PM2.5", year == c("2021", "2022", "2023"))%>%
@@ -251,20 +570,15 @@ airqual_train %>%
        x = "Month", 
        y = "Amount of PM2.5 in UG/M3",
        caption = "Source: Open Data DC / PM2.5 = Fine Particulate Matter")+
-  theme_bw()git 
+  theme_bw() 
 
 ```
 
-## Analysis and Visualization
+## Decision Tree
+
+Finally, we create a decision tree that categorizes air monitor observations. Notably, the first two splits are based on time--another reason to advocate for this type of data in every census tract.
 
 ```{r}
-#This is the decision tree model from my stretch exercise, we can feel free to use or cut as needed - Kelly
-
-
-#Creating a new chunk to make models easier to find
-
-############################# Decision Tree Model - Model 3
-
 airqual_tree1 <- air_monitors%>%
   filter(parametername == "NO2")%>%
   select(-parametername, -reportingunits)
@@ -310,8 +624,8 @@ airqual_trpredict%>%
 
 ```
 
-## Regression Analysis
+## Recommendations and Conclusions
 
-```{r}
+Our cluster analysis demonstrated how patterns of transportation relate to air quality. From there, our deeper dive into air quality in DC revealed several limitations with our original analysis. We recommend that the city collect air quality data covering multiple pollutants across each census tract. This would enable future researchers to investigate whether certain "transportation typologies" have different air quality patterns throughout the year, whether the typologies are associated with different pollutants, and create a decision tree that incorporates these transportation-related insights.
 
-```
+With this information, local policymakers could better target interventions to improve air quality through the transportation system, such as updating restrictions on truck traffic, increasing the transit options serving wards outside of the downtown area, and incentivizing non-car commutes.
