@@ -1,11 +1,16 @@
 # Air Quality in the District of Columbia: An Analysis
 By Diana Schoder and Kelly Primrose
+
 Prepared for: PPOL 670 Introduction to Data Science, Final Project
 
 Motivating Question: Can we use the tools learned in this course to delve into air quality trends in the District of Columbia?
 
+## Project Files
+The data cleaning section of our project can be accessed [here](https://github.com/KPrimrose13/finalproject/blob/eaf53bac9ae6c3d7c1254675be14ca839dc25c0f/TransitDataCleaning.R). It was separated out from the main project to improve readability and center our analysis results. 
 
-**Primary Data Sources:**
+The main page for our final project analysis can be accessed [here](https://github.com/KPrimrose13/finalproject/blob/eaf53bac9ae6c3d7c1254675be14ca839dc25c0f/finalproject.qmd).
+
+## Data Sources
 
 1. Open Data DC. Air Quality Real Time. https://opendata.dc.gov/datasets/DCGIS::air-quality-realtime/about 
 2. U.S. Census Bureau. American Community Survey 5-year 2021 - 2017. Accessed via API.
