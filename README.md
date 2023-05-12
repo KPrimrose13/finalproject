@@ -23,11 +23,11 @@ The qmd file for our final project analysis can be accessed [here](https://githu
 5. Open Data DC. Taxi & Limo Stands. [Link](https://opendata.dc.gov/datasets/DCGIS::taxi-and-limousine-stands-/explore?location=38.894944%2C-77.015000%2C12.62)
 6. Open Data DC. Bike Lanes. [Link](https://opendata.dc.gov/datasets/DCGIS::bicycle-lanes/explore) 
 7. Open Data DC. Walkshed of Bikeshare Stands. [Link](https://opendata.dc.gov/datasets/DCGIS::walkshed-bikeshare/explore?location=38.898101%2C-77.004680%2C13.09)
-8. Open Data DC. Truck restriction. [Link](https://opendata.dc.gov/datasets/DCGIS::truck-restriction/explore)
-9. Open Data DC. 2017 traffic Volume. [Link](https://opendata.dc.gov/datasets/DCGIS::2017-traffic-volume/explore?location=38.892506%2C-77.020630%2C12.70)
-10. Open Data DC. Commute to work by car, transit, etc. [Link](https://opendata.dc.gov/datasets/DCGIS::acs-economic-characteristics-dc-census-tract/about)
-11. Open Data DC. Metro stations. [Link](https://opendata.dc.gov/datasets/DCGIS::metro-stations-district/explore?location=38.892509%2C-77.020630%2C12.70)
-12. Open Data DC. Pedestrian friendliness. [Link](https://opendata.dc.gov/datasets/DCGIS::pedestrian-friendliness-index-census-blocks/explore)
+8. Open Data DC. Truck Restriction. [Link](https://opendata.dc.gov/datasets/DCGIS::truck-restriction/explore)
+9. Open Data DC. 2017 Traffic Volume. [Link](https://opendata.dc.gov/datasets/DCGIS::2017-traffic-volume/explore?location=38.892506%2C-77.020630%2C12.70)
+10. Open Data DC. Commute to Work by Car, Transit, etc. [Link](https://opendata.dc.gov/datasets/DCGIS::acs-economic-characteristics-dc-census-tract/about)
+11. Open Data DC. Metro Stations. [Link](https://opendata.dc.gov/datasets/DCGIS::metro-stations-district/explore?location=38.892509%2C-77.020630%2C12.70)
+12. Open Data DC. Pedestrian Friendliness. [Link](https://opendata.dc.gov/datasets/DCGIS::pedestrian-friendliness-index-census-blocks/explore)
 
 
 ## Final Dataset Variables
