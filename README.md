@@ -8,9 +8,9 @@ Motivating Question: Can we use the tools learned in this course to delve into a
 ## Project Files
 The data cleaning section of our project can be accessed [here](https://github.com/KPrimrose13/finalproject/blob/eaf53bac9ae6c3d7c1254675be14ca839dc25c0f/TransitDataCleaning.R). It was separated out from the main project to improve readability and center our analysis results. Where possible, we used 2017 data to match the EJ Screen air quality data, which also avoids differences in trends due to the Covid-19 pandemic.
 
-The qmd file for our final project analysis can be accessed [here](https://github.com/KPrimrose13/finalproject/blob/eaf53bac9ae6c3d7c1254675be14ca839dc25c0f/finalproject.qmd).
+The qmd file for our final project analysis can be accessed [here](https://github.com/KPrimrose13/finalproject/finalproject.qmd).
 
-The page for our final product can be accessed [here](https://github.com/KPrimrose13/finalproject/blob/f8ff8fbd1e02ea1b474163b52c75a3ee70ce695c/finalproject.html) 
+The page for our final product can be accessed [here](https://github.com/KPrimrose13/finalproject/blob/f8ff8fbd1e02ea1b474163b52c75a3ee70ce695c/finalproject.html).
 
 ## Data Sources
 
