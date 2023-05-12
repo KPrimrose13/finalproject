@@ -1,5 +1,5 @@
 # Air Quality in the District of Columbia: An Analysis
-By Diana Schoder and Kelly Primrosetttt
+By Diana Schoder and Kelly Primrose
 
 Prepared for: PPOL 670 Introduction to Data Science, Final Project
 
