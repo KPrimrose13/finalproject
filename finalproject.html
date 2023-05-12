@@ -2681,26 +2681,26 @@ vertical-align: -.125em;
 <pre><code># A tibble: 20 × 4
    terms                       value component id       
    &lt;chr&gt;                       &lt;dbl&gt;     &lt;int&gt; &lt;chr&gt;    
- 1 cumulative percent variance  17.5         1 pca_kG7We
- 2 cumulative percent variance  32.0         2 pca_kG7We
- 3 cumulative percent variance  44.3         3 pca_kG7We
- 4 cumulative percent variance  51.3         4 pca_kG7We
- 5 cumulative percent variance  57.3         5 pca_kG7We
- 6 cumulative percent variance  63.0         6 pca_kG7We
- 7 cumulative percent variance  68.1         7 pca_kG7We
- 8 cumulative percent variance  72.1         8 pca_kG7We
- 9 cumulative percent variance  76.0         9 pca_kG7We
-10 cumulative percent variance  79.5        10 pca_kG7We
-11 cumulative percent variance  82.9        11 pca_kG7We
-12 cumulative percent variance  85.6        12 pca_kG7We
-13 cumulative percent variance  87.8        13 pca_kG7We
-14 cumulative percent variance  89.9        14 pca_kG7We
-15 cumulative percent variance  91.7        15 pca_kG7We
-16 cumulative percent variance  93.5        16 pca_kG7We
-17 cumulative percent variance  95.0        17 pca_kG7We
-18 cumulative percent variance  96.4        18 pca_kG7We
-19 cumulative percent variance  97.7        19 pca_kG7We
-20 cumulative percent variance  98.8        20 pca_kG7We</code></pre>
+ 1 cumulative percent variance  17.5         1 pca_TJNfM
+ 2 cumulative percent variance  32.0         2 pca_TJNfM
+ 3 cumulative percent variance  44.3         3 pca_TJNfM
+ 4 cumulative percent variance  51.3         4 pca_TJNfM
+ 5 cumulative percent variance  57.3         5 pca_TJNfM
+ 6 cumulative percent variance  63.0         6 pca_TJNfM
+ 7 cumulative percent variance  68.1         7 pca_TJNfM
+ 8 cumulative percent variance  72.1         8 pca_TJNfM
+ 9 cumulative percent variance  76.0         9 pca_TJNfM
+10 cumulative percent variance  79.5        10 pca_TJNfM
+11 cumulative percent variance  82.9        11 pca_TJNfM
+12 cumulative percent variance  85.6        12 pca_TJNfM
+13 cumulative percent variance  87.8        13 pca_TJNfM
+14 cumulative percent variance  89.9        14 pca_TJNfM
+15 cumulative percent variance  91.7        15 pca_TJNfM
+16 cumulative percent variance  93.5        16 pca_TJNfM
+17 cumulative percent variance  95.0        17 pca_TJNfM
+18 cumulative percent variance  96.4        18 pca_TJNfM
+19 cumulative percent variance  97.7        19 pca_TJNfM
+20 cumulative percent variance  98.8        20 pca_TJNfM</code></pre>
 </div>
 </div>
 <p>The following code obtains loadings and displays the component values for each observation of the first five components.</p>
@@ -3501,7 +3501,7 @@ F-statistic: 12.46 on 30 and 175 DF,  p-value: &lt; 2.2e-16</code></pre>
 <h2 class="anchored" data-anchor-id="decision-tree">Decision Tree</h2>
 <p>Finally, we create a decision tree that categorizes air monitor observations. We decided to focus on a single pollutant, Fine Particulate Matter (PM2.5), which is measured at every monitoring station and which stuck out to us in the very first bar graph as being much higher than the other pollutants. Burning fuels, whether it be in a power plant or the engine of a car, generates PM2.5 when gases from the nitrogen oxide family interact with the air. These gases and the particulates they produce can, over long periods of exposure, cause or worsen breathing difficulties in children. This is why it’s important to have an accurate understanding of whether location plays a significant role in concentrations of PM2.5 as it may have a negative impact on kids living nearby even if measured quantities are not high-dosage.</p>
 <p>After running our model, we were interested to see that all of the splits are based on time variables like day, month, and year of record. Given that our number of monitoring sites is lower than the number of years those sites have been conducting monitoring, it is understandable that time would play a larger role than location. This is another reason to advocate for this type of data in every census tract. Having month as our initial split point also validates some of the trends seen in our exploratory data analysis where we saw a trend towards higher PM2.5 levels in the warm months as compared to cool ones.</p>
-<p>All of that being said, our decision tree model’s high root mean squared error indicates that it is not the most fine-tuned tool out there. Further refinements, such as adding monitoring data for every census tract,</p>
+<p>All of that being said, our decision tree model’s root mean squared error is on the higher side, indicating that the model needs further refinements. One of the most useful refinements possible would be to add tract-based air monitoring data so we can have a larger sample size for the number of sites we’re monitoring. It would also be ideal if we could add in data from monitoring sites in Maryland and Virginia to ascertain how DC levels compare to surrounding areas. Both of these improvements would be costly financially and in terms of time, though, so it is understandable that they have not been implemented yet.</p>
 <div class="cell">
 <details>
 <summary>Show the code</summary>
