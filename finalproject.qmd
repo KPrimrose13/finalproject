@@ -28,6 +28,8 @@ library(purrr)
 library(patchwork)
 library(janitor)
 library(ggfortify)
+
+
 ```
 
 ## Background
@@ -152,6 +154,19 @@ res %>%
     y = "mean WSS over 5 folds"
   ) +
   theme_minimal() 
+
+```
+Although other metrics suggest that fewer clusters may be optimal, there is no consensus between four, two, and one, and we decide to use four with the understanding that some may be highly similar.
+
+```{r}
+# Set seed
+set.seed(202305121)
+
+# Average silhouette width
+fviz_nbclust(transit_pca, kmeans, method = "silhouette")
+
+# Gap statistics
+fviz_nbclust(transit_pca, kmeans, method = "gap_stat")
 
 ```
 
@@ -528,7 +543,6 @@ airqual_split <- initial_split(data = air_monitors)
 airqual_train <- training(x = airqual_split)
 airqual_test <- testing(x = airqual_split)
 
-
 #visualization 1 
 airqual_train %>%
   group_by(parametername)%>%
@@ -562,6 +576,8 @@ airqual_train %>%
   group_by(sitename)%>%
   count()
 
+ungroup(airqual_train)
+
 #Visualization 2
 airqual_train %>%
   filter(parametername == "NO2")%>%
@@ -573,6 +589,8 @@ airqual_train %>%
        y = "Amount of NO2 in PPB",
        caption = "Source: Open Data DC")+
   theme_bw()
+
+ungroup(airqual_train)
 
 ```
 
@@ -611,30 +629,28 @@ airqual_train %>%
 
 ## Decision Tree
 
-Finally, we create a decision tree that categorizes air monitor observations. We decided to focus on a single pollutant, Nitrogen Dioxide (N02), which is a gas measured at every monitoring station. Burning fuels, whether it be in a power plant or the engine of a car, generates N02 and its sibling gases in the nitrogen oxide family. These gases can, over long periods of exposure, cause or worsen breathing difficulties in children. This is why it's important to have an accurate understanding of whether location plays a significant role in concentrations of N02 as it may have a negative impact on kids living nearby even if measured quantities are not high-dosage.
+Finally, we create a decision tree that categorizes air monitor observations. We decided to focus on a single pollutant, Fine Particulate Matter (PM2.5), which is measured at every monitoring station and which stuck out to us in the very first bar graph as being much higher than the other pollutants. Burning fuels, whether it be in a power plant or the engine of a car, generates PM2.5 when gases from the nitrogen oxide family interact with the air. These gases and the particulates they produce can, over long periods of exposure, cause or worsen breathing difficulties in children. This is why it's important to have an accurate understanding of whether location plays a significant role in concentrations of PM2.5 as it may have a negative impact on kids living nearby even if measured quantities are not high-dosage.
 
 After running our model, we were interested to see that the first two splits are based on the month and year of record. Given that our number of monitoring sites is lower than the number of years those sites have been conducting monitoring, it is understandable that time would play a larger role than location. This is another reason to advocate for this type of data in every census tract. Having month as our initial split point also validates some of the trends seen in our exploratory data analysis where we saw higher Nitrogen Oxide (N02) levels in the warm months as compared to cool ones.
 
 All of that being said, our decision tree model's high root mean squared error indicates that it is not the most fine-tuned tool out there. Further refinements, such as adding monitoring data for every census tract,
 
 ```{r}
-airqual_tree1 <- air_monitors%>%
-  filter(parametername == "NO2")%>%
-  select(-parametername, -reportingunits)
-
-airqual_tree <- airqual_tree1 
 
 set.seed(123)
 
-tree_split <- initial_split(airqual_tree1)
 
-tree_training <- training(x = tree_split)
-tree_testing <- testing(x = tree_split)
+airqual_train <- airqual_train%>%
+  filter(parametername == "PM2.5")%>%
+  select(-parametername, -reportingunits)
 
+airqual_test <- airqual_test%>%
+  filter(parametername == "PM2.5")%>%
+  select(-parametername, -reportingunits)
 
-airqual_trec <- recipe(value ~ ., data = tree_training) %>%
-  step_dummy(sitename)%>%
+airqual_trec <- recipe(value ~ ., data = airqual_train) %>%
   step_normalize(all_numeric_predictors())%>%
+  step_dummy(sitename)%>%
   prep()
 
 #regression
@@ -647,13 +663,13 @@ airqual_twf <- workflow()%>%
   add_model(airqual_treemod)
 
 airqual_fit <- airqual_twf%>%
-  fit(data = tree_training)
+  fit(data = airqual_train)
 
 rpart.plot::rpart.plot(x = airqual_fit$fit$fit$fit)
 
 airqual_trpredict <- bind_cols(
-  tree_testing,
-  predict(object = airqual_fit, new_data = tree_testing)
+  airqual_test,
+  predict(object = airqual_fit, new_data = airqual_test)
 )
 
 airqual_trpredict%>%
