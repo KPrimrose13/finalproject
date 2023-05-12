@@ -29,7 +29,6 @@ library(patchwork)
 library(janitor)
 library(ggfortify)
 
-
 ```
 
 ## Background
@@ -156,6 +155,7 @@ res %>%
   theme_minimal() 
 
 ```
+
 Although other metrics suggest that fewer clusters may be optimal, there is no consensus between four, two, and one, and we decide to use four with the understanding that some may be highly similar.
 
 ```{r}
@@ -163,10 +163,12 @@ Although other metrics suggest that fewer clusters may be optimal, there is no c
 set.seed(202305121)
 
 # Average silhouette width
-fviz_nbclust(transit_pca, kmeans, method = "silhouette")
+fv1 <- fviz_nbclust(transit_pca, kmeans, method = "silhouette")
 
 # Gap statistics
-fviz_nbclust(transit_pca, kmeans, method = "gap_stat")
+fv2 <- fviz_nbclust(transit_pca, kmeans, method = "gap_stat")
+
+fv1 + fv2
 
 ```
 
@@ -235,15 +237,15 @@ ggplot() +
 
 To better understand these clusters, we map them, finding that:
 
-1. Cluster one covers downtown, Capitol Hill, and Georgetown.
+1.  Cluster one covers downtown, Capitol Hill, and Georgetown.
 
-2. Cluster two is the most geographically dispersed, and it captures all of Wards 7 and 8.
+2.  Cluster two is the most geographically dispersed, and it captures all of Wards 7 and 8.
 
-3. Cluster three is intermingled with much of cluster two, but covers more of the northern areas of DC.
+3.  Cluster three is intermingled with much of cluster two, but covers more of the northern areas of DC.
 
-4. Cluster four largely represents Haines Point and the National Mall.
+4.  Cluster four largely represents Haines Point and the National Mall.
 
-```{r, results='hide'}
+```{r, results='hide', message=FALSE}
 
 # Plot clusters by geography, this chunk is set to results = 'hide' 
 # to hide the ugly output from sf_transform
@@ -420,7 +422,7 @@ bar5
 
 ```
 
-We then created a basic map of traffic volume to see where it is highest. Unsurprisingly to anyone who's ever driven a motor vehicle in DC, the downtown areas have exceptionally high traffic volume while the outer reaches of town generally do not, though it is likely that the areas of light blue in the Southeast suburbs traces the lines of major highways like I-95 and 295. 
+We then created a basic map of traffic volume to see where it is highest. Unsurprisingly to anyone who's ever driven a motor vehicle in DC, the downtown areas have exceptionally high traffic volume while the outer reaches of town generally do not, though it is likely that the areas of light blue in the Southeast suburbs traces the lines of major highways like I-95 and 295.
 
 ```{r}
 
@@ -436,7 +438,7 @@ ggplot() +
 
 ```
 
-Switching to look solely at public transit availability, we see that this also follows our clusters in broad strokes. The core areas of downtown experience vastly higher availability of multiple public transit modes than the outer reaches. 
+Switching to look solely at public transit availability, we see that this also follows our clusters in broad strokes. The core areas of downtown experience vastly higher availability of multiple public transit modes than the outer reaches.
 
 ```{r}
 # Summary: Public transit
@@ -631,7 +633,7 @@ airqual_train %>%
 
 Finally, we create a decision tree that categorizes air monitor observations. We decided to focus on a single pollutant, Fine Particulate Matter (PM2.5), which is measured at every monitoring station and which stuck out to us in the very first bar graph as being much higher than the other pollutants. Burning fuels, whether it be in a power plant or the engine of a car, generates PM2.5 when gases from the nitrogen oxide family interact with the air. These gases and the particulates they produce can, over long periods of exposure, cause or worsen breathing difficulties in children. This is why it's important to have an accurate understanding of whether location plays a significant role in concentrations of PM2.5 as it may have a negative impact on kids living nearby even if measured quantities are not high-dosage.
 
-After running our model, we were interested to see that the first two splits are based on the month and year of record. Given that our number of monitoring sites is lower than the number of years those sites have been conducting monitoring, it is understandable that time would play a larger role than location. This is another reason to advocate for this type of data in every census tract. Having month as our initial split point also validates some of the trends seen in our exploratory data analysis where we saw higher Nitrogen Oxide (N02) levels in the warm months as compared to cool ones.
+After running our model, we were interested to see that all of the splits are based on time variables like day, month, and year of record. Given that our number of monitoring sites is lower than the number of years those sites have been conducting monitoring, it is understandable that time would play a larger role than location. This is another reason to advocate for this type of data in every census tract. Having month as our initial split point also validates some of the trends seen in our exploratory data analysis where we saw a trend towards higher PM2.5 levels in the warm months as compared to cool ones.
 
 All of that being said, our decision tree model's high root mean squared error indicates that it is not the most fine-tuned tool out there. Further refinements, such as adding monitoring data for every census tract,
 
