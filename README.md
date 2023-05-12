@@ -18,7 +18,7 @@ The qmd file for our final project analysis can be accessed [here](https://githu
 
 1. Open Data DC. Air Quality Real Time. [Link](https://opendata.dc.gov/datasets/DCGIS::air-quality-realtime/about) 
 2. U.S. Census Bureau. American Community Survey 5-year 2021 - 2017. Accessed via API.
-3. Open Data DC. Bus Stops. [Link](https://opendata.dc.gov/datasets/b6521725905c48b89c2d661649fb8692/api)
+3. Open Data DC. Bus Stops. [Link](https://opendata.dc.gov/datasets/metro-bus-stops/explore)
 4. Open Data DC. Urban Tree Canopy by Census Block. [Link](https://opendata.dc.gov/datasets/DCGIS::urban-tree-canopy-by-census-block-in-2020/explore?location=38.893730%2C-77.014456%2C12.78)
 5. Open Data DC. Taxi & Limo Stands. [Link](https://opendata.dc.gov/datasets/DCGIS::taxi-and-limousine-stands-/explore?location=38.894944%2C-77.015000%2C12.62)
 6. Open Data DC. Bike Lanes. [Link](https://opendata.dc.gov/datasets/DCGIS::bicycle-lanes/explore) 
