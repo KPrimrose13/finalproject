@@ -6,11 +6,11 @@ Prepared for: PPOL 670 Introduction to Data Science, Final Project
 Motivating Question: Can we use the tools learned in this course to delve into air quality trends in the District of Columbia?
 
 ## Project Files
+The main page for our final product can be accessed [here](https://kprimrose13.github.io/finalproject/finalproject.html).
+
 The data cleaning section of our project can be accessed [here](https://github.com/KPrimrose13/finalproject/blob/eaf53bac9ae6c3d7c1254675be14ca839dc25c0f/TransitDataCleaning.R). It was separated out from the main project to improve readability and center our analysis results. Where possible, we used 2017 data to match the EJ Screen air quality data, which also avoids differences in trends due to the Covid-19 pandemic.
 
-The qmd file for our final project analysis can be accessed [here](https://github.com/KPrimrose13/finalproject/finalproject.qmd).
-https://<user>.github.io/<repository>/about/contact-us.html
-The page for our final product can be accessed [here](https://kprimrose13.github.io/finalproject/finalproject.html).
+The qmd file for our final project analysis can be accessed [here](https://github.com/KPrimrose13/finalproject/blob/0640ced3439978583b42c45cecfacceaf9047c19/finalproject.qmd).
 
 ## Data Sources
 
