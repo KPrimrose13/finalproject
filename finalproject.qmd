@@ -635,7 +635,7 @@ Finally, we create a decision tree that categorizes air monitor observations. We
 
 After running our model, we were interested to see that all of the splits are based on time variables like day, month, and year of record. Given that our number of monitoring sites is lower than the number of years those sites have been conducting monitoring, it is understandable that time would play a larger role than location. This is another reason to advocate for this type of data in every census tract. Having month as our initial split point also validates some of the trends seen in our exploratory data analysis where we saw a trend towards higher PM2.5 levels in the warm months as compared to cool ones.
 
-All of that being said, our decision tree model's high root mean squared error indicates that it is not the most fine-tuned tool out there. Further refinements, such as adding monitoring data for every census tract,
+All of that being said, our decision tree model's root mean squared error is on the higher side, indicating that the model needs further refinements. One of the most useful refinements possible would be to add tract-based air monitoring data so we can have a larger sample size for the number of sites we're monitoring. It would also be ideal if we could add in data from monitoring sites in Maryland and Virginia to ascertain how DC levels compare to surrounding areas. Both of these improvements would be costly financially and in terms of time, though, so it is understandable that they have not been implemented yet. 
 
 ```{r}
 
