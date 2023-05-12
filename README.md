@@ -10,7 +10,7 @@ The data cleaning section of our project can be accessed [here](https://github.c
 
 The qmd file for our final project analysis can be accessed [here](https://github.com/KPrimrose13/finalproject/finalproject.qmd).
 
-The page for our final product can be accessed [here](https://github.com/KPrimrose13/finalproject/blob/f8ff8fbd1e02ea1b474163b52c75a3ee70ce695c/finalproject.html).
+The page for our final product can be accessed [here](https://github.com/KPrimrose13/finalproject/finalproject.html).
 
 ## Data Sources
 
